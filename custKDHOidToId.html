@@ -1,0 +1,224 @@
+<!--File Name   : custKDHOidToId.html-->
+<!--Description : 10진수 oid를 입력하면 2진수, 16진수, Object ID로 변환해주는 함수-->
+<!--Version     : 1.0-->
+<!--Author      : Dohee, KIM-->
+<!--since       : 2023-08-28-->
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+	<meta charset="utf-8">
+	<meta name="description" content="십진수를 16진수로 변환하는 계산기 및 변환 방법">
+	<title>id -> OID 변환기</title>
+	<style>
+        .input {
+            width: 350px;
+            height: 40px;
+            font-size: 20px;
+            background-color: #ffffff;
+        }
+
+        .field {
+            font-size: 20px;
+        }
+
+        .result {
+            background-size: 20px;
+            background-color: #0abbef;
+            width: 600px;
+            height: 40px;
+            font-size: 25px;
+        }
+
+        .btn {
+            width: 70px;
+            height: 40px;
+            font-size: 25px;
+            background-color: #8c8c8c;
+        }
+	</style>
+</head>
+
+<body>
+<center>
+	<form>
+		<table style="text-align: center; vertical-align: middle;">
+			<tr>
+				<td class="field">Oid 입력</td>
+				<td><input id=inputOid type="text" class="input" inputmode="numeric"/><br/></td>    <!--Oid 입력 필드-->
+				<td title="convert" type="submit" class="btn" onclick="javascript:convertOidToId('inputOid')"><b>출력</b>
+				</td>
+				<!--출력 버튼 onclick: 그 속성이 적용된 요소를 클릭했을 때 일어나는 일-->
+				<!--<td><input type="submit" value="출력"/></td>-->
+			</tr>
+		</table>
+		<!--결과 값과 입력 값 사이 공간--><br>
+		<table style="text-align: left; vertical-align: middle;">
+			<tr>
+				<td class="field">2진수 결과 값</td>
+				<td><input id="resultOfBIN" type="text" class="result"/></td>
+				<!--onclick 속성은 버튼이 아닌 곳엔 들어가지 않아.-->
+			</tr>
+			<tr>
+				<td class="field">16진수 결과 값</td>
+				<td><input id="resultOfHEX" type="text" class="result"/><br/></td>
+			</tr>
+			<tr>
+				<td class="field">Object Id 결과 값</td>
+				<td><input id="resultOfObjectId" type="text" class="result"/></td>
+			</tr>
+		</table>
+	</form>
+</center>
+<!--onclick 속성 안에 자바 스크립트 함수를 입력하면, <script></script> 태그 안의 해당 함수를 실행한다-->
+<script type="text/javascript">
+
+    /* 십진수 oid를 id로 변환시키는 함수 */
+    function convertOidToId() {
+        var inputOid = document.getElementById('inputOid');
+        var resultOfBIN = convertDecToBin(inputOid.value);                        //10진수인 oid를 2진수로 변환해주는 함수
+		debugger;
+        var resultOfHEX = convertBinToHex(resultOfBIN);                          //2진수를 16진수로 변환해주는 함수
+		debugger;
+        var resultOfObjectId = convertBinToDec(resultOfBIN);                     //2진수를 object id(십진수)로 변환해주는 함수
+    }
+
+    /*입력한 oid(십진수)를 배열형태의 2진수로 반환하는 기능(함수)*/
+    function convertDecToBin(inputOid, lengthOfArray) {
+        const reverseArrayOfBin = [];                                                      //2진수를 저장할 배열(추후에 역순으로 출력해줘야 할 이진수 배열)
+        var bit = 0;                                                                //bit: 2진수 배열 각각의 index
+        var absoluteValue;                                                          //inputOid의 절댓값.
+        if (inputOid < 0) {                                                         //입력한 oid가 음수라면 그 절대값을 출력한다.
+            absoluteValue = -inputOid;
+        } else {
+            absoluteValue = inputOid;
+        }
+
+        while (absoluteValue > 0) {                                                      //입력한 oid의 절댓값을 2로 나누고 그 나머지를 arrayofbin 배열에 저장하는 반복문 -> 몫이 0보다 작아지면 반복문 끝남.
+			reverseArrayOfBin[bit] = absoluteValue % 2;
+			absoluteValue = parseInt(absoluteValue / 2);                                      //parseInt 이용해 ()안의 연산 후 소수점 이하를 버린 값 즉,몫을 구한다.
+            bit++;
+        }
+        /*arrayofbin 배열을 역순으로 출력해 최종 oid를 2진수로 변환하는 값을 출력하는 반복문*/
+        const arrayOfBin = [];                                                      //최종 2진수 결과 값에 출력될 배열선언
+        for (var i = reverseArrayOfBin.length - 1; i >= 0; i--) {
+			arrayOfBin[(reverseArrayOfBin.length - 1) - i] = reverseArrayOfBin[i];
+        }
+        if (inputOid < 0) {
+            const notOperationResult = notOperation(arrayOfBin);
+            const notOperationResultPlusOne = addOneToBinary(notOperationResult);      //notOperationResultPlusOne :(31) [0, 0, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 0, 0]
+			const arrayResultOfBin = shiftArray(notOperationResultPlusOne);
+			var resultOfBIN = arrayResultOfBin.join('');
+		} else {  /*input oid 가 0이상의 양수일 경우.*/
+            var resultOfBIN = arrayOfBin.join('');    //배열 형태를 string 변환
+        }
+		return resultOfBIN;
+        //document.getelementbyid('resultofbin').value = resultofbin;
+    }
+
+
+    /*not 연산 기능*/
+    function notOperation(arrayOfBin) {                    //입력된 배열 arr의 각 요소를 확인하고, 값이 0인 경우에는 1로 바꾸고 값이 1인 경우에는 0으로 바꿈.
+        const notOperationResult = [];
+
+        for (var i = 0; i < arrayOfBin.length; i++) {             // 이 안으로 arrayofbin의 값을 가지고 오질 못하네.. --> arrayofbin을 함수명 뒤 괄호에 넣어줘야 갖고오지...
+            if (arrayOfBin[i] === 0) {
+				notOperationResult.push(1);
+            } else if (arrayOfBin[i] === 1) {
+				notOperationResult.push(0);
+            }
+        }
+		return notOperationResult;
+    }
+
+	/*배열로 출력된 이진수에 1을 더한 이진수 배열을 출력하는 함수*/
+    function addOneToBinary(notOperationResult){
+        const notOperationResultPlusOne = [...notOperationResult];
+        let carry = 1;              // 올림(carry) 변수 초기화
+        for (let i = notOperationResult.length - 1; i >= 0; i--) {
+            if (notOperationResult[i] == '0' && carry === 1) {
+				notOperationResultPlusOne[i] = 1;                       // 현재 비트가 0이고 올림이 있는 경우
+                carry = 0;                                              // 올림 제거
+                break;
+            } else if (notOperationResult[i] == '1' && carry === 1) {
+				notOperationResultPlusOne[i] = 0;                       // 현재 비트가 1이고 올림이 있는 경우
+            }
+        }
+        // 현재 비트가 0이거나 올림이 없는 경우는 그대로 유지
+        if (carry === 1) {
+			notOperationResultPlusOne.unshift('1');                      // 모든 비트에 대해 연산 후에도 올림(carry)이 남아있는 경우
+            //return notoperationresultplusone;
+        }
+        return notOperationResultPlusOne;
+    }
+
+    //음의 이진수는 맨 앞자리가 1로 표현 된다.
+    function shiftArray(arr) {
+        const newArray = [...arr];  // 기존 배열 복사
+        newArray.unshift(1);      // 첫 번째 요소에 '1' 삽입
+        return newArray;
+    }
+
+
+    /*2진수 -> 16 진수 변환(함수)*/
+    function convertBinToHex(binary) {
+		debugger;
+		//1. 변환된 이진수 문자열들의 길이가 4의 배수인지 체크하고 부족한 값은 앞에서부터 0으로 채워준다.
+		let resultOfHEX = '';
+		debugger;
+		for (var i = binary.length; i >=0; i -= 4) {
+			const chunk = binary.substr(i, -4);
+			chunks.unshift(chunk);
+			//const hexChunk = decimal.toString(16).toUpperCase();
+			return chunks;
+		}
+
+		return resultOfHEX;
+        //2. 길이가 4의 배수인 이진수 문자열들을 16비트씩 나눈 후
+        //3. 16진수로 변환하는 방식
+        //if 나머지가 10이상이면  몫을 10은 a, 11은 b, 12는 c, 13은 d, 14는 f로 변환한다.
+        document.getelementbyid('resultOfHEX').value = resultOfHEX;                 //'16진수 변환 값' 결과창에 들어갈 값.(배이사님이 쓰지 말랬음 return으로 받으랬음.)
+    }
+
+	/*배열의 길이를 4의 배수로 맞추고 부족한 배열의 값이 있다면 앞에서부터 0으로 채워주는 함수*/
+	function padArray(array){
+		const currentLength = array.length;
+		const remainder = currentLength % 4;
+
+		if (remainder === 0) {
+			return array; 									// 이미 목표 배수인 경우 원래 배열 반환
+		}
+		const paddingLength = 4 - remainder;
+		const paddingArray = Array(paddingLength).fill(0);  // 앞에서부터 '0'으로 채워진 배열 생성
+
+		return paddingArray.concat(array);
+	}
+
+	/*주어진 배열을 16비트 크기로 나누어 각각의 조각으로 분할하는 기능*/
+	function splitArrayInto16Bits(array){
+		const result = [];
+
+		for (let i = 0; i < array.length; i += 4) {
+			const chunk = array.slice(i, i + 4);
+			result.push(chunk);
+		}
+
+		return result;
+	}
+    /*oid를 변환한 2진수를 십진수(object id)로 변환하는 함수*/
+    function convertBinToDec(resultOfBIN) {
+
+    }
+
+	/*32비트의 2진수를 생성하는 로직 32비트 고정 하지말라고 하셨는데...*/
+	function createBinary32(decimal) {
+		var binary = decimal.tostring(2);
+
+		//부족한 bit 수 만큼 앞에 0추가
+		while (binary.length < 32) {
+			binary = '0' + binary;
+		}
+		return binary;
+	}
+</script>
+</body>
+</html>
